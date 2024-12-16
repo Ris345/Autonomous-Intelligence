@@ -13,7 +13,7 @@ DROP TABLE IF EXISTS workflows;
 DROP TABLE IF EXISTS apiKeys;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS freeTrialAllowlist;
-DROP TABLE IF EXISTS organizations;
+-- DROP TABLE IF EXISTS organizations;
 
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -31,9 +31,8 @@ CREATE TABLE users (
     credits INTEGER NOT NULL DEFAULT 0,
     credits_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     chat_gpt_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    num_chatgpt_requests INTEGER NOT NULL DEFAULT 0,
-    organization_id INTEGER DEFAULT NULL,
-    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    num_chatgpt_requests INTEGER NOT NULL DEFAULT 0
+    -- FOREIGN KEY (organization_id) REFERENCES organizations(id)
 );
 
 CREATE TABLE StripeInfo (
@@ -84,8 +83,7 @@ CREATE TABLE chats (
     associated_task INTEGER NOT NULL,
     custom_model_key TEXT,
     organization_id INTEGER DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE messages (
@@ -105,8 +103,7 @@ CREATE TABLE workflows (
     associated_task INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     organization_id INTEGER DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE tickers (
@@ -126,8 +123,7 @@ CREATE TABLE documents (
     document_text LONGTEXT NOT NULL,
     organization_id INTEGER DEFAULT NULL,
     FOREIGN KEY (workflow_id) REFERENCES workflows(id),
-    FOREIGN KEY (chat_id) REFERENCES chats(id),
-    FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    FOREIGN KEY (chat_id) REFERENCES chats(id)
 );
 
 CREATE TABLE chunks (
@@ -176,21 +172,13 @@ CREATE TABLE apiKeys (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Add new organizations table
-CREATE TABLE organizations (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    organization_type ENUM('enterprise', 'individual') NOT NULL,
-    website_url VARCHAR(255),
-    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
 
 CREATE UNIQUE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_chats_user_id ON chats(user_id);
 CREATE INDEX idx_messages_chat_id ON messages(chat_id);
 CREATE INDEX idx_messages_sent_from_user ON messages(sent_from_user);
 CREATE INDEX idx_workflows_user_id ON workflows(user_id);
-CREATE INDEX idx_api_keys_user_id ON apiKeys(user_id);
+-- CREATE INDEX idx_api_keys_user_id ON apiKeys(user_id);
 CREATE INDEX idx_documents_workflow_id ON documents(workflow_id);
 CREATE INDEX idx_documents_chat_id ON documents(chat_id);
 CREATE INDEX idx_chunks_document_id ON chunks(document_id);

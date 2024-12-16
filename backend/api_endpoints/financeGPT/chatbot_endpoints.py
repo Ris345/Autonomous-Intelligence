@@ -1,8 +1,8 @@
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import OpenAI
-from langchain.vectorstores import Chroma
-from langchain.docstore.document import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings.openai import OpenAIEmbeddings
+# from langchain.llms import OpenAI
+# from langchain.vectorstores import Chroma
+# from langchain.docstore.document import Document
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 import ray
 import openai

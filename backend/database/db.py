@@ -12,13 +12,16 @@ import secrets
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
+
 def get_db_connection():
     if ('.local' in socket.gethostname() or '.lan' in socket.gethostname() or 'Shadow' in socket.gethostname()) or ('APP_ENV' in os.environ and os.environ['APP_ENV'] == 'local'):
         if ('BL' in os.environ and os.environ['BL'] == 'bl'):
             conn = mysql.connector.connect(
                 user='root',
-                password='1165205407',
+                password='',
                 host='localhost',
+                unix_socket='/tmp/mysql.sock',
                 port=3306,
                 database=dbName
             )
