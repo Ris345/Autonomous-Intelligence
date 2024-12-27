@@ -178,7 +178,7 @@ CREATE INDEX idx_chats_user_id ON chats(user_id);
 CREATE INDEX idx_messages_chat_id ON messages(chat_id);
 CREATE INDEX idx_messages_sent_from_user ON messages(sent_from_user);
 CREATE INDEX idx_workflows_user_id ON workflows(user_id);
--- CREATE INDEX idx_api_keys_user_id ON apiKeys(user_id);
+CREATE INDEX idx_api_keys_user_id ON apiKeys(user_id);
 CREATE INDEX idx_documents_workflow_id ON documents(workflow_id);
 CREATE INDEX idx_documents_chat_id ON documents(chat_id);
 CREATE INDEX idx_chunks_document_id ON chunks(document_id);
