@@ -202,33 +202,30 @@ function clearUser(state) {
   state.entities.users.byId = {};
 }
 
+// bug fix for state.entities.apikeys being undefined 
 function clearApiKeys(state) {
+  if (!state.entities.apiKeys) {
+    state.entities.apiKeys = { byId: {}, allIds: [] };
+  }
   state.entities.apiKeys.allIds = [];
   state.entities.apiKeys.byId = {};
 }
 
-export const initialState = {
-    // entities holds all normalized data.
-    // Initialized to be empty, but we comment the structure for documentation purposes.
-    entities: {
-        users: {
-            byId : {
-                // "user1" : {
-                //     id : "user1",
-                //     personName: "user name",
-                //     email: "email",
-                //     privilegeLevel: 0,
-                // }
-            },
-            allIds : [
-                // "user1"
-            ]
-        }
-    },
-    // ID of current user.  0 is for unset.
-    currentUser: 0,
-    numCredits: 0,
- };
+const initialState = {
+  entities: {
+      users: {
+          byId: {},
+          allIds: []
+      },
+      apiKeys: {
+          byId: {},
+          allIds: []
+      }
+  },
+  currentUser: 0,
+  numCredits: 0,
+};
+
 
  export const userSlice = createSlice({
     name: "user",
@@ -261,6 +258,7 @@ export const initialState = {
           state.currentUser = id;
           state.entities.users.allIds.push(id);
           state.entities.users.byId[id] = action.payload;
+          console.log('Updated users allIds:', state.entities.users.allIds);
         },
         [getAPIKeys.fulfilled]: (state, action) => {
           clearApiKeys(state);
@@ -270,11 +268,17 @@ export const initialState = {
               state.entities.apiKeys.allIds.push(id);
               state.entities.apiKeys.byId[id] = apiKey;
           });
+          console.log('Updated users allIds:', state.entities.users.allIds);
         },
+        // the bug is right here console.log('state', state.entities.apiKeys); this is returning undefined
         [generateAPIKey.fulfilled]: (state, action) => {
           var payload = action.payload;
+          console.log('generateAPIKey payload:', payload);
+          console.log('generateAPIKey payload["id"]:', payload["id"]);
+          console.log('state', state.entities.apiKeys.allIds);
           state.entities.apiKeys.allIds.push(payload["id"]);
           state.entities.apiKeys.byId[payload["id"]] = payload;
+          console.log('Updated apiKeys allIds:', state.entities.apiKeys.allIds);
         },
         [deleteAPIKey.fulfilled]: (state, action) => {
           var id = action.payload;
@@ -283,6 +287,7 @@ export const initialState = {
               state.entities.apiKeys.allIds.splice(index, 1); // 2nd parameter means remove one item only
           }
           delete state.entities.apiKeys.byId[id];
+          console.log('Updated users allIds:', state.entities.users.allIds);
         },
     },
   });
