@@ -1541,7 +1541,9 @@ def evaluate():
     return result
 
 
-# parent Agent
+# agent boiler plate code 
+agents = {}
+
 class Agent:
     def __init__(self, name, model, system_prompt, task=None, tools=None, verbose=False):
         self.name = name
@@ -1551,6 +1553,7 @@ class Agent:
         self.tools = tools if tools else []
         self.verbose = verbose
         self.messages = []
+
         if self.system_prompt:
             self.messages.append({"role": "system", "content": self.system_prompt})
 
@@ -1561,52 +1564,81 @@ class Agent:
         return result
 
     def execute(self):
-        client = openai.OpenAI()
-        print(client)
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            temperature=0,
-            messages=self.messages
-        )
+        client = openai.OpenAI()  
+        try:
+            completion = client.chat.completions.create(
+                model=self.model,
+                temperature=0,
+                messages=self.messages
+            )
 
-        print(completion.choices[0].message.content)
-        return completion.choices[0].message["content"]
-    
-# Create a new agent
+            response = completion.choices[0].message.content  
+            print(response)
+            return response
+        except openai.OpenAIError as e:
+            return f"OpenAI API Error: {str(e)}"
+
+
 @app.route('/create-agent', methods=['POST'])
 def create_agent():
+    """Creates a new agent and stores it in the global dictionary."""
     data = request.json
+    if not data.get('name') or not data.get('model') or not data.get('system_prompt'):
+        return jsonify({"error": "Missing required fields"}), 400
+
     agent = Agent(
-        name=data.get('name'),
-        model=data.get('model'),
-        system_prompt=data.get('system_prompt'),
+        name=data['name'],
+        model=data['model'],
+        system_prompt=data['system_prompt'],
         task=data.get('task'),
         tools=data.get('tools'),
         verbose=data.get('verbose', False)
     )
-    print('agent created named', agent)
-    return jsonify(data), 201
 
-# Get all agents
-@app.route('/get-agent', methods=['GET'])
+    # Store the agent using its name as an ID
+    agents[data['name']] = agent  
+    print(agent, data)
+    return jsonify({"message": f"Agent '{data['name']}' created"}), 201
+
+
+@app.route('/get-agents', methods=['GET'])
 def get_agents():
-    return jsonify([agent.__dict__ for agent in agents]), 200
+    """Returns a list of all created agents."""
+    return jsonify({name: agent.__dict__ for name, agent in agents.items()}), 200
 
-# Get a single agent by ID
-@app.route('/agents/<int:agent_id>', methods=['GET'])
-def get_agent(agent_id):
-   return 
 
-# Update an agent by ID
-@app.route('/agents/<int:agent_id>', methods=['PUT'])
-def update_agent(agent_id):
-   return 
+@app.route('/agents/<string:agent_name>', methods=['GET'])
+def get_agent(agent_name):
+    """Fetch a single agent by name."""
+    agent = agents.get(agent_name)
+    if not agent:
+        return jsonify({"error": "Agent not found"}), 404
+    return jsonify(agent.__dict__), 200
 
-# Delete an agent by ID
-@app.route('/agents/<int:agent_id>', methods=['DELETE'])
-def delete_agent(agent_id):
-    return
 
+@app.route('/agents/<string:agent_name>/execute', methods=['POST'])
+def execute_agent(agent_name):
+    """Executes the agent with a user message."""
+    agent = agents.get(agent_name)
+    if not agent:
+        return jsonify({"error": "Agent not found"}), 404
+
+    data = request.json
+    message = data.get('message')
+    if not message:
+        return jsonify({"error": "Missing message"}), 400
+
+    response = agent(message)  # Calls the agent
+    return jsonify({"response": response})
+
+
+@app.route('/agents/<string:agent_name>', methods=['DELETE'])
+def delete_agent(agent_name):
+    """Deletes an agent by name."""
+    if agent_name in agents:
+        del agents[agent_name]
+        return jsonify({"message": f"Agent '{agent_name}' deleted"}), 200
+    return jsonify({"error": "Agent not found"}), 404
 
 if __name__ == '__main__':
     app.run(port=5000)
