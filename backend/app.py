@@ -466,43 +466,43 @@ def create_organization():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/get_organization', methods=['GET'])
-@valid_api_key_required
-def get_organization():
-    try:
-        organization_id = request.args.get('organization_id')
-        if not organization_id:
-            return jsonify({"error": "Missing organization_id"}), 400
+# @app.route('/get_organization', methods=['GET'])
+# @valid_api_key_required
+# def get_organization():
+#     try:
+#         organization_id = request.args.get('organization_id')
+#         if not organization_id:
+#             return jsonify({"error": "Missing organization_id"}), 400
 
-        # Get organization info from the database
-        organization = get_organization_from_db(organization_id)
-        if not organization:
-            return jsonify({"error": "Organization not found"}), 404
+#         # Get organization info from the database
+#         organization = get_organization_from_db(organization_id)
+#         if not organization:
+#             return jsonify({"error": "Organization not found"}), 404
 
-        return jsonify(organization), 200
+#         return jsonify(organization), 200
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/<organization_name>')
-def chat_with_organization(organization_name):
-    organization = get_organization_from_db_by_name(organization_name)
-    if organization:
-        return jsonify({
-            'name': organization['name'],
-            'website_url': organization['website_url'],
-            'organization_type': organization['organization_type']
-        })
-    else:
-        return jsonify({'error': 'Organization not found'}), 404
+# @app.route('/<organization_name>')
+# def chat_with_organization(organization_name):
+#     organization = get_organization_from_db_by_name(organization_name)
+#     if organization:
+#         return jsonify({
+#             'name': organization['name'],
+#             'website_url': organization['website_url'],
+#             'organization_type': organization['organization_type']
+#         })
+#     else:
+#         return jsonify({'error': 'Organization not found'}), 404
 
-def get_organization_from_db_by_name(organization_name):
-    conn, cursor = get_db_connection()
-    cursor.execute('SELECT * FROM organizations WHERE name = %s', [organization_name])
-    organization = cursor.fetchone()
-    conn.close()
-    return organization
+# def get_organization_from_db_by_name(organization_name):
+#     conn, cursor = get_db_connection()
+#     cursor.execute('SELECT * FROM organizations WHERE name = %s', [organization_name])
+#     organization = cursor.fetchone()
+#     conn.close()
+#     return organization
 
 ## CHATBOT SECTION
 output_document_path = 'output_document'
@@ -1539,6 +1539,73 @@ def evaluate():
     )
 
     return result
+
+
+# parent Agent
+class Agent:
+    def __init__(self, name, model, system_prompt, task=None, tools=None, verbose=False):
+        self.name = name
+        self.model = model
+        self.system_prompt = system_prompt
+        self.task = task
+        self.tools = tools if tools else []
+        self.verbose = verbose
+        self.messages = []
+        if self.system_prompt:
+            self.messages.append({"role": "system", "content": self.system_prompt})
+
+    def __call__(self, message):
+        self.messages.append({"role": "user", "content": message})
+        result = self.execute()
+        self.messages.append({"role": "assistant", "content": result})
+        return result
+
+    def execute(self):
+        client = openai.OpenAI()
+        print(client)
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            temperature=0,
+            messages=self.messages
+        )
+
+        print(completion.choices[0].message.content)
+        return completion.choices[0].message["content"]
+    
+# Create a new agent
+@app.route('/create-agent', methods=['POST'])
+def create_agent():
+    data = request.json
+    agent = Agent(
+        name=data.get('name'),
+        model=data.get('model'),
+        system_prompt=data.get('system_prompt'),
+        task=data.get('task'),
+        tools=data.get('tools'),
+        verbose=data.get('verbose', False)
+    )
+    print('agent created named', agent)
+    return jsonify(data), 201
+
+# Get all agents
+@app.route('/get-agent', methods=['GET'])
+def get_agents():
+    return jsonify([agent.__dict__ for agent in agents]), 200
+
+# Get a single agent by ID
+@app.route('/agents/<int:agent_id>', methods=['GET'])
+def get_agent(agent_id):
+   return 
+
+# Update an agent by ID
+@app.route('/agents/<int:agent_id>', methods=['PUT'])
+def update_agent(agent_id):
+   return 
+
+# Delete an agent by ID
+@app.route('/agents/<int:agent_id>', methods=['DELETE'])
+def delete_agent(agent_id):
+    return
 
 
 if __name__ == '__main__':

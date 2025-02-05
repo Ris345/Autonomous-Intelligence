@@ -202,6 +202,7 @@ function clearUser(state) {
   state.entities.users.byId = {};
 }
 
+// bug fix for API keys not being initlaized 
 function clearApiKeys(state) {
   state.entities.apiKeys.allIds = [];
   state.entities.apiKeys.byId = {};
