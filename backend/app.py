@@ -1573,12 +1573,14 @@ class Agent:
             )
 
             response = completion.choices[0].message.content  
-            print(response)
             return response
         except openai.OpenAIError as e:
             return f"OpenAI API Error: {str(e)}"
+        
+    def __repr__(self):
+        return f"Agent(name={self.name}, model={self.model}, system_prompt={self.system_prompt}, task={self.task}, tools={self.tools}, verbose={self.verbose})"
 
-
+# create-agent
 @app.route('/create-agent', methods=['POST'])
 def create_agent():
     """Creates a new agent and stores it in the global dictionary."""
@@ -1597,48 +1599,48 @@ def create_agent():
 
     # Store the agent using its name as an ID
     agents[data['name']] = agent  
-    print(agent, data)
+    print(f"Agent created: {agent}")
     return jsonify({"message": f"Agent '{data['name']}' created"}), 201
 
-
+#get-agents 
 @app.route('/get-agents', methods=['GET'])
 def get_agents():
     """Returns a list of all created agents."""
     return jsonify({name: agent.__dict__ for name, agent in agents.items()}), 200
 
-
-@app.route('/agents/<string:agent_name>', methods=['GET'])
-def get_agent(agent_name):
-    """Fetch a single agent by name."""
-    agent = agents.get(agent_name)
-    if not agent:
-        return jsonify({"error": "Agent not found"}), 404
-    return jsonify(agent.__dict__), 200
-
-
-@app.route('/agents/<string:agent_name>/execute', methods=['POST'])
-def execute_agent(agent_name):
-    """Executes the agent with a user message."""
-    agent = agents.get(agent_name)
-    if not agent:
-        return jsonify({"error": "Agent not found"}), 404
-
+# Update an agent by name
+@app.route('/update-agent', methods=['PUT'])
+def update_agent():
+    """Updates an agent's attributes by name."""
     data = request.json
-    message = data.get('message')
-    if not message:
-        return jsonify({"error": "Missing message"}), 400
+    agent_name = data.get('name')
+    if not agent_name or agent_name not in agents:
+        return jsonify({"error": "Agent not found"}), 404
 
-    response = agent(message)  # Calls the agent
-    return jsonify({"response": response})
+    agent = agents[agent_name]
+    agent.model = data.get('model', agent.model)
+    agent.system_prompt = data.get('system_prompt', agent.system_prompt)
+    agent.task = data.get('task', agent.task)
+    agent.tools = data.get('tools', agent.tools)
+    agent.verbose = data.get('verbose', agent.verbose)
 
+    print(f"Agent updated: {agent}")
+    return jsonify({"message": f"Agent '{agent_name}' updated"}), 200
 
-@app.route('/agents/<string:agent_name>', methods=['DELETE'])
-def delete_agent(agent_name):
-    """Deletes an agent by name."""
-    if agent_name in agents:
-        del agents[agent_name]
-        return jsonify({"message": f"Agent '{agent_name}' deleted"}), 200
-    return jsonify({"error": "Agent not found"}), 404
+# agent is not getting deleted from the curl request 
+
+# Delete an agent by name
+@app.route('/delete-agent', methods=['DELETE'])
+def delete_agent():
+    agent_name = request.args.get('agent_name')  # Extract from query params
+    if not agent_name:
+        return jsonify({"error": "Missing agent_name parameter"}), 400
+
+    # Now handle deletion logic (assuming agents is a list or dict)
+    global agents
+    agents = [agent for agent in agents if agent["name"] != agent_name]
+
+    return jsonify({"message": f"Agent {agent_name} deleted successfully"}), 200
 
 if __name__ == '__main__':
     app.run(port=5000)
