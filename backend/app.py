@@ -78,6 +78,10 @@ from api_endpoints.financeGPT.chatbot_endpoints import add_prompt_to_workflow_db
 
 from datetime import datetime
 
+from database.db import insert_agent_info, get_agent_info 
+
+from api_endpoints.agents_config import handler 
+
 load_dotenv(override=True)
 
 app = Flask(__name__)
@@ -1541,7 +1545,6 @@ def evaluate():
     return result
 
 
-# agent boiler plate code 
 agents = {}
 
 class Agent:
@@ -1580,7 +1583,7 @@ class Agent:
     def __repr__(self):
         return f"Agent(name={self.name}, model={self.model}, system_prompt={self.system_prompt}, task={self.task}, tools={self.tools}, verbose={self.verbose})"
 
-# create-agent
+
 @app.route('/create-agent', methods=['POST'])
 def create_agent():
     """Creates a new agent and stores it in the global dictionary."""
@@ -1597,18 +1600,18 @@ def create_agent():
         verbose=data.get('verbose', False)
     )
 
-    # Store the agent using its name as an ID
+
     agents[data['name']] = agent  
+    insert_agent_info(agent)
     print(f"Agent created: {agent}")
     return jsonify({"message": f"Agent '{data['name']}' created"}), 201
 
-#get-agents 
+
 @app.route('/get-agents', methods=['GET'])
 def get_agents():
     """Returns a list of all created agents."""
     return jsonify({name: agent.__dict__ for name, agent in agents.items()}), 200
 
-# Update an agent by name
 @app.route('/update-agent', methods=['PUT'])
 def update_agent():
     """Updates an agent's attributes by name."""
@@ -1627,16 +1630,14 @@ def update_agent():
     print(f"Agent updated: {agent}")
     return jsonify({"message": f"Agent '{agent_name}' updated"}), 200
 
-# agent is not getting deleted from the curl request 
 
-# Delete an agent by name
 @app.route('/delete-agent', methods=['DELETE'])
 def delete_agent():
-    agent_name = request.args.get('agent_name')  # Extract from query params
+    agent_name = request.args.get('agent_name')  
     if not agent_name:
         return jsonify({"error": "Missing agent_name parameter"}), 400
 
-    # Now handle deletion logic (assuming agents is a list or dict)
+
     global agents
     agents = [agent for agent in agents if agent["name"] != agent_name]
 

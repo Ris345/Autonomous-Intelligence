@@ -27,29 +27,29 @@ function updateOptions(options) {
   return update;
 }
 
-export function refreshAccessToken() {
-  return fetch(API_ENDPOINT + "/refresh", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("refreshToken")}`,
-    },
-  }).then((response) => {
-    if (!response.ok) {
-      // Return a rejected promise if the response is not successful
-      throw new Error;
-    }
-    return response.json();
-  }).then((data) => {
-    localStorage.setItem("accessToken", data.accessToken);
-    return Promise.resolve({ok: true});
-  }).catch((error) => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    window.location.replace("/");
-    return Promise.reject(error);
-  });
-}
+// export function refreshAccessToken() {
+//   return fetch(API_ENDPOINT + "/refresh", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${localStorage.getItem("refreshToken")}`,
+//     },
+//   }).then((response) => {
+//     if (!response.ok) {
+//       // Return a rejected promise if the response is not successful
+//       throw new Error;
+//     }
+//     return response.json();
+//   }).then((data) => {
+//     localStorage.setItem("accessToken", data.accessToken);
+//     return Promise.resolve({ok: true});
+//   }).catch((error) => {
+//     localStorage.removeItem("accessToken");
+//     localStorage.removeItem("refreshToken");
+//     window.location.replace("/");
+//     return Promise.reject(error);
+//   });
+// }
 
 function fetcher(url, options = {}, retryCount = 0) {
   // Hardcode the maximum number of retries
@@ -61,28 +61,10 @@ function fetcher(url, options = {}, retryCount = 0) {
   return fetch(API_ENDPOINT + "/" + url, updateOptions(options)).then((response) => {
     if (!response.ok) {
       // Return a rejected promise if the response is not successful
-      throw new Error;
+      return new Error;
     }
     return response;
-  }).catch(
-    (error) => {
-      if (retryCount <= maxRetries) {
-        return refreshAccessToken().then((response) => {
-          if (!response.ok) {
-            // Return a rejected promise if the response is not successful
-            throw new Error;
-          }
-          return fetcher(url, options, retryCount + 1);
-        }).catch(
-          (error) => {
-            return Promise.reject(error);
-          }
-        );
-      } else {
-        return Promise.reject(error);
-      }
-    }
-  );
+  })
 }
 
 export default fetcher;
