@@ -676,18 +676,51 @@ def get_api_keys(email):
         "keys": keys
     }
 
+def create_agentsdata_table_if_not_exists():
+    conn, cursor = get_db_connection()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS agentsdata (
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            name TEXT NOT NULL,
+            model TEXT NOT NULL,
+            system_prompt TEXT NOT NULL,
+            task TEXT,
+            tools TEXT,
+            verbose BOOLEAN NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Call the function to create the table if it doesn't exist
+print(create_agentsdata_table_if_not_exists())
+
+
+
+
 
 def insert_agent_info(name, model, system_prompt, task=None, tools=None, verbose=False):
     print('db has been successfully populated')
     conn, cursor = get_db_connection()
-    cursor.execute('''
+    
+    # Convert tools list to a string
+    tools_str = ','.join(tools) if tools else None
+    
+    # Print the SQL statement and parameters for debugging
+    sql = '''
         INSERT INTO agentsdata (name, model, system_prompt, task, tools, verbose)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (name, model, system_prompt, task, tools, verbose))
+        VALUES (%s, %s, %s, %s, %s, %s)
+    '''
+    params = (name, model, system_prompt, task, tools_str, verbose)
+    print("SQL:", sql)
+    print("Params:", params)
+    
+    cursor.execute(sql, params)
     conn.commit()
     conn.close()
 
-def get_agents_info():
+
+def get_agent_info():
     conn, cursor = get_db_connection()
     cursor.execute('SELECT * FROM agentsdata')
     agents = cursor.fetchall()

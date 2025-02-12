@@ -80,7 +80,7 @@ from datetime import datetime
 
 from database.db import insert_agent_info, get_agent_info 
 
-from api_endpoints.agents_config import handler 
+# from api_endpoints.agents_config import CreateAgentHandler 
 
 load_dotenv(override=True)
 
@@ -1602,7 +1602,7 @@ def create_agent():
 
 
     agents[data['name']] = agent  
-    insert_agent_info(agent)
+    insert_agent_info(agent.name, agent.model, agent.system_prompt, agent.task, agent.tools, agent.verbose)
     print(f"Agent created: {agent}")
     return jsonify({"message": f"Agent '{data['name']}' created"}), 201
 
@@ -1642,6 +1642,10 @@ def delete_agent():
     agents = [agent for agent in agents if agent["name"] != agent_name]
 
     return jsonify({"message": f"Agent {agent_name} deleted successfully"}), 200
+
+
+
+
 
 if __name__ == '__main__':
     app.run(port=5000)
