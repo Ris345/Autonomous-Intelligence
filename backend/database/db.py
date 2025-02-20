@@ -697,16 +697,12 @@ print(create_agentsdata_table_if_not_exists())
 
 
 
-
-
 def insert_agent_info(name, model, system_prompt, task=None, tools=None, verbose=False):
     print('db has been successfully populated')
     conn, cursor = get_db_connection()
     
-    # Convert tools list to a string
     tools_str = ','.join(tools) if tools else None
     
-    # Print the SQL statement and parameters for debugging
     sql = '''
         INSERT INTO agentsdata (name, model, system_prompt, task, tools, verbose)
         VALUES (%s, %s, %s, %s, %s, %s)
